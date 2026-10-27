@@ -1,0 +1,124 @@
+# .agents/zidane/config.yaml — optional per-project overrides
+#
+# EVERYTHING IN THIS FILE IS COMMENTED OUT ON PURPOSE.
+# Copying it verbatim gives you an inert file — which is the correct default.
+# Zidane discovers the stack at runtime from ./CLAUDE.md, .planning/codebase/*.md,
+# and .planning/PROJECT.md. You only need this file to pin something discovery
+# gets wrong, or to supply a command that lives nowhere machine-readable.
+#
+# Resolution order: config.yaml > .planning/codebase/* > direct inspection > ask.
+# Uncomment only the keys you actually need. A half-right pin is worse than none:
+# it overrides correct discovery.
+
+
+# ===========================================================================
+# SCHEMA
+# ===========================================================================
+#
+# layers:                 # maps the 3 implementation agents onto your structure
+#   data:                 # → Messi
+#     repo: <name>        # must match an entry in GSD `planning.sub_repos`.
+#                         # OMIT for a single-repo project.
+#     paths: [<glob>, …]  # where this layer's code lives
+#   service:              # → Cristiano
+#     repo: <name>
+#     paths: [<glob>, …]
+#   client:               # → Neymar
+#     repo: <name>
+#     paths: [<glob>, …]
+#
+#   Omit a layer entirely when the project does not have one. Zidane will not
+#   dispatch an agent for a layer that is neither declared nor discoverable.
+#
+# commands:               # a wrong build command burns a whole cycle
+#   data:    { test: <cmd> }
+#   service: { build: <cmd>, test: <cmd> }
+#   client:  { build: <cmd>, lint: <cmd>, test: <cmd> }
+#   e2e:     { test: <cmd> }
+#
+# conventions:
+#   migration_author: <string>   # whatever your migration tool stamps as author
+#
+# preview:                # step 6/6. Omit the whole block to SKIP the preview.
+#   command:  <cmd>       # Zidane will not invent a way to run your app.
+#   url:      <url>
+#   teardown: <cmd>
+
+
+# ===========================================================================
+# EXAMPLE A — two-repo JVM + Node workspace
+# ===========================================================================
+# Requires .planning/config.json → planning.sub_repos: ["backend", "frontend"]
+#
+# layers:
+#   data:
+#     repo: backend
+#     paths:
+#       - src/main/resources/db/
+#       - src/main/java/**/repository/
+#   service:
+#     repo: backend
+#     paths:
+#       - src/main/java/**/domain/
+#       - src/main/java/**/application/
+#   client:
+#     repo: frontend
+#     paths:
+#       - src/
+#
+# commands:
+#   data:
+#     test: "mvn test -Dtest='*RepositoryIT'"
+#   service:
+#     build: "mvn clean install"
+#     test: "mvn test"
+#   client:
+#     build: "npm run build"
+#     lint: "npm run lint"
+#     test: "npm test"
+#   e2e:
+#     test: "npx playwright test"
+#
+# conventions:
+#   migration_author: "your-username"
+#
+# preview:
+#   command: "docker compose up -d"
+#   url: "http://localhost:3000"
+#   teardown: "docker compose down"
+
+
+# ===========================================================================
+# EXAMPLE B — single-repo Python service, no client layer
+# ===========================================================================
+# .planning/config.json → planning.sub_repos: []   (so: no `repo:` keys below)
+#
+# layers:
+#   data:
+#     paths: [alembic/, app/repositories/]
+#   service:
+#     paths: [app/domain/, app/api/]
+#   # no `client` → Neymar is never dispatched
+#
+# commands:
+#   service:
+#     build: "uv sync"
+#     test: "pytest"
+#   e2e:
+#     test: "pytest tests/e2e"
+
+
+# ===========================================================================
+# EXAMPLE C — single-repo Go CLI, no client, no E2E harness
+# ===========================================================================
+# layers:
+#   data:
+#     paths: [internal/store/]
+#   service:
+#     paths: [internal/domain/, cmd/]
+#
+# commands:
+#   service:
+#     build: "go build ./..."
+#     test: "go test ./..."
+#   # no e2e → Mbappé proposes a harness and asks before scaffolding one
